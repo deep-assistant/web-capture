@@ -1,7 +1,8 @@
 import express from 'express';
-import fetch from 'node:fetch';               // Node 18+ has native fetch
+import fetch from 'node-fetch';
 import TurndownService from 'turndown';
 import captureWebsite from 'capture-website';
+import { fileURLToPath } from 'url';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -49,6 +50,12 @@ app.get('/image', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Renderer service listening on http://localhost:${port}`);
-});
+// Start the server if this is the main module
+const isMainModule = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (isMainModule) {
+  app.listen(port, () => {
+    console.log(`Renderer service listening on http://localhost:${port}`);
+  });
+}
+
+export { app };
