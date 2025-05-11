@@ -1,3 +1,5 @@
+import { jest } from '@jest/globals';
+
 // Increase timeout for tests that might take longer
 jest.setTimeout(10000);
 
