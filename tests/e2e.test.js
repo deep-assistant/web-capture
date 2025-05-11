@@ -66,4 +66,15 @@ describe('E2E: Web Capture Microservice', () => {
     expect(buf.slice(0, 8)).toEqual(pngSignature);
     expect(buf.length).toBeGreaterThan(100); // Should be a non-trivial PNG
   });
+
+  it('should stream content from /fetch endpoint', async () => {
+    const url = 'https://example.com';
+    const res = await fetch(`${baseUrl}/fetch?url=${encodeURIComponent(url)}`);
+    expect(res.status).toBe(200);
+    
+    // Get the response as text
+    const text = await res.text();
+    expect(text).toMatch(/<html/i);
+    expect(text).toMatch(/Example Domain/i);
+  }, 10000);
 }); 
