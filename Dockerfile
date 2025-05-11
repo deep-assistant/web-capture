@@ -38,4 +38,4 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["node", "src/index.js"]
+ENTRYPOINT ["node", "src/index.js"]
