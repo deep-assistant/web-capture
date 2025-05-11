@@ -11,5 +11,5 @@ export default {
   testEnvironment: 'node',
   verbose: true,
   testMatch: ['**/tests/**/*.test.js'],
-  setupFiles: ['./tests/jest.setup.js']
+  setupFiles: ['./tests/jest.setup.mjs']
 }; 
