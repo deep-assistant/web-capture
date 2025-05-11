@@ -67,9 +67,9 @@ describe('E2E: Web Capture Microservice', () => {
     expect(buf.length).toBeGreaterThan(100); // Should be a non-trivial PNG
   });
 
-  it('should stream content from /fetch endpoint', async () => {
+  it('should stream content from /stream endpoint', async () => {
     const url = 'https://example.com';
-    const res = await fetch(`${baseUrl}/fetch?url=${encodeURIComponent(url)}`);
+    const res = await fetch(`${baseUrl}/stream?url=${encodeURIComponent(url)}`);
     expect(res.status).toBe(200);
     
     // Get the response as text

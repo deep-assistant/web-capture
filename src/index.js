@@ -87,7 +87,7 @@ app.get('/image', async (req, res) => {
 });
 
 // Route: Proxy (stream) any content from a URL
-app.get('/fetch', async (req, res) => {
+app.get('/stream', async (req, res) => {
   const url = req.query.url;
   if (!url) return res.status(400).send('Missing `url` parameter');
   try {
@@ -115,7 +115,7 @@ app.get('/fetch', async (req, res) => {
         res,
         (err) => {
           if (err) {
-            console.error('Pipeline error in /fetch:', err);
+            console.error('Pipeline error in /stream:', err);
             if (!res.headersSent) {
               res.status(500);
               res.end('Error proxying content');
@@ -127,7 +127,7 @@ app.get('/fetch', async (req, res) => {
       res.end();
     }
   } catch (err) {
-    console.error('Fetch error:', err);
+    console.error('Stream error:', err);
     if (!res.headersSent) {
       res.status(500);
       res.end('Error proxying content');

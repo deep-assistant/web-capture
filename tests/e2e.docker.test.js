@@ -112,10 +112,10 @@ describe('E2E (Docker): Web Capture Microservice', () => {
     console.log('Timing: /image endpoint:', timings.png + 'ms');
   }, 10000);
 
-  it('should stream content from /fetch endpoint', async () => {
+  it('should stream content from /stream endpoint', async () => {
     const startTime = Date.now();
     const url = 'https://example.com';
-    const res = await fetch(`${baseUrl}/fetch?url=${encodeURIComponent(url)}`);
+    const res = await fetch(`${baseUrl}/stream?url=${encodeURIComponent(url)}`);
     expect(res.status).toBe(200);
     
     // Get the response as text
@@ -124,6 +124,6 @@ describe('E2E (Docker): Web Capture Microservice', () => {
     expect(text).toMatch(/Example Domain/i);
     
     const endTime = Date.now();
-    console.log(`Timing: /fetch endpoint: ${endTime - startTime}ms`);
+    console.log(`Timing: /stream endpoint: ${endTime - startTime}ms`);
   }, 10000);
 }); 
