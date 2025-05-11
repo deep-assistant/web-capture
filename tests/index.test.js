@@ -119,7 +119,12 @@ describe('Web Capture Microservice', () => {
       expect(response.status).toBe(200);
       expect(response.type).toBe('image/png');
       expect(response.body.equals(mockBuffer)).toBe(true);
-      expect(captureWebsite.buffer).toHaveBeenCalledWith(testUrl, { fullPage: true });
+      expect(captureWebsite.buffer).toHaveBeenCalledWith(testUrl, {
+        fullPage: true,
+        launchOptions: {
+          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        }
+      });
     });
 
     it('should return 400 when URL is missing', async () => {

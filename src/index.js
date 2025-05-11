@@ -42,7 +42,12 @@ app.get('/image', async (req, res) => {
   const url = req.query.url;
   if (!url) return res.status(400).send('Missing `url` parameter');
   try {
-    const buffer = await captureWebsite.buffer(url, { fullPage: true });
+    const buffer = await captureWebsite.buffer(url, {
+      fullPage: true,
+      launchOptions: {
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+      }
+    });
     res.type('image/png').send(buffer);
   } catch (err) {
     console.error(err);
