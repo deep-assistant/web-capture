@@ -142,3 +142,6 @@ examples/python/downloaded.png
 examples/js/downloaded.html
 examples/js/downloaded.md
 examples/js/downloaded.png
+
+# project
+.DS_Store
