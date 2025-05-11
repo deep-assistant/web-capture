@@ -7,13 +7,37 @@ import { fileURLToPath } from 'url';
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Exportable function to fetch HTML from a URL
+export async function fetchHtml(url) {
+  if (!url) throw new Error('Missing URL parameter');
+  const response = await fetch(url);
+  return response.text();
+}
+
+// Exportable function to convert HTML to Markdown
+export function convertHtmlToMarkdown(html) {
+  const turndown = new TurndownService({
+    headingStyle: 'atx',
+    codeBlockStyle: 'fenced',
+    emDelimiter: '*',
+    bulletListMarker: '-',
+    strongDelimiter: '**',
+    linkStyle: 'inlined',
+    linkReferenceStyle: 'full',
+    hr: '---',
+    style: false // Ignore style tags
+  });
+  // Remove any inline CSS
+  const cleanHtml = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+  return turndown.turndown(cleanHtml);
+}
+
 // Route: Fetch raw HTML
 app.get('/html', async (req, res) => {
   const url = req.query.url;
   if (!url) return res.status(400).send('Missing `url` parameter');
   try {
-    const response = await fetch(url);
-    const html = await response.text();
+    const html = await fetchHtml(url);
     res.type('text/html').send(html);
   } catch (err) {
     console.error(err);
@@ -26,22 +50,8 @@ app.get('/markdown', async (req, res) => {
   const url = req.query.url;
   if (!url) return res.status(400).send('Missing `url` parameter');
   try {
-    const response = await fetch(url);
-    const html = await response.text();
-    const turndown = new TurndownService({
-      headingStyle: 'atx',
-      codeBlockStyle: 'fenced',
-      emDelimiter: '*',
-      bulletListMarker: '-',
-      strongDelimiter: '**',
-      linkStyle: 'inlined',
-      linkReferenceStyle: 'full',
-      hr: '---',
-      style: false // Ignore style tags
-    });
-    // Remove any inline CSS
-    const cleanHtml = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
-    const markdown = turndown.turndown(cleanHtml);
+    const html = await fetchHtml(url);
+    const markdown = convertHtmlToMarkdown(html);
     res.type('text/markdown').send(markdown);
   } catch (err) {
     console.error(err);
