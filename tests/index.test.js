@@ -67,7 +67,7 @@ describe('Web Capture Microservice', () => {
   describe('GET /markdown', () => {
     const testUrl = 'https://example.com';
     const testHtml = '<html><body><h1>Test Page</h1><p>Some text</p></body></html>';
-    const expectedMarkdown = 'Test Page\n=========\n\nSome text';
+    const expectedMarkdown = '# Test Page\n\nSome text';
 
     it('should convert HTML to Markdown when URL is provided', async () => {
       nock(testUrl)
@@ -81,6 +81,38 @@ describe('Web Capture Microservice', () => {
       expect(response.status).toBe(200);
       expect(response.type).toBe('text/markdown');
       expect(response.text).toBe(expectedMarkdown);
+    });
+
+    it('should remove CSS from the markdown output', async () => {
+      const htmlWithCss = `
+        <html>
+          <head>
+            <style>
+              body { background-color: #f0f0f2; }
+              div { width: 600px; }
+            </style>
+          </head>
+          <body>
+            <h1>Test Page</h1>
+            <p>Some text</p>
+          </body>
+        </html>
+      `;
+
+      nock(testUrl)
+        .get('/')
+        .reply(200, htmlWithCss);
+
+      const response = await request(app)
+        .get('/markdown')
+        .query({ url: testUrl });
+
+      expect(response.status).toBe(200);
+      expect(response.type).toBe('text/markdown');
+      expect(response.text).not.toContain('background-color');
+      expect(response.text).not.toContain('width: 600px');
+      expect(response.text).toContain('Test Page');
+      expect(response.text).toContain('Some text');
     });
 
     it('should return 400 when URL is missing', async () => {

@@ -28,8 +28,20 @@ app.get('/markdown', async (req, res) => {
   try {
     const response = await fetch(url);
     const html = await response.text();
-    const turndown = new TurndownService();
-    const markdown = turndown.turndown(html);
+    const turndown = new TurndownService({
+      headingStyle: 'atx',
+      codeBlockStyle: 'fenced',
+      emDelimiter: '*',
+      bulletListMarker: '-',
+      strongDelimiter: '**',
+      linkStyle: 'inlined',
+      linkReferenceStyle: 'full',
+      hr: '---',
+      style: false // Ignore style tags
+    });
+    // Remove any inline CSS
+    const cleanHtml = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+    const markdown = turndown.turndown(cleanHtml);
     res.type('text/markdown').send(markdown);
   } catch (err) {
     console.error(err);
