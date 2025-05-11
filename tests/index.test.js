@@ -107,7 +107,12 @@ describe('Web Capture Microservice', () => {
 
   describe('GET /image', () => {
     const testUrl = 'https://example.com';
-    const mockBuffer = Buffer.from('fake-image-data');
+    const mockBuffer = Buffer.from([
+      0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, // PNG signature
+      0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52, // IHDR chunk
+      // ... (rest can be arbitrary for test)
+      0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82 // IEND chunk
+    ]);
 
     it('should return PNG image when URL is provided', async () => {
       captureWebsite.buffer.mockResolvedValue(mockBuffer);
