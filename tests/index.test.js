@@ -208,4 +208,43 @@ describe('Web Capture Microservice', () => {
       expect(response.text).toBe('Error proxying content');
     });
   });
+
+  describe('GET /fetch', () => {
+    const testUrl = 'https://example.com';
+    const testHtml = '<html><body><h1>Test Page</h1></body></html>';
+
+    it('should return content when URL is provided', async () => {
+      nock(testUrl)
+        .get('/')
+        .reply(200, testHtml);
+
+      const response = await request(app)
+        .get('/fetch')
+        .query({ url: testUrl });
+
+      expect(response.status).toBe(200);
+      expect(response.text).toBe(testHtml);
+    });
+
+    it('should return 400 when URL is missing', async () => {
+      const response = await request(app)
+        .get('/fetch');
+
+      expect(response.status).toBe(400);
+      expect(response.text).toBe('Missing `url` parameter');
+    });
+
+    it('should return 500 when fetch fails', async () => {
+      nock(testUrl)
+        .get('/')
+        .replyWithError('Network error');
+
+      const response = await request(app)
+        .get('/fetch')
+        .query({ url: testUrl });
+
+      expect(response.status).toBe(500);
+      expect(response.text).toBe('Error fetching content');
+    });
+  });
 }); 

@@ -77,4 +77,13 @@ describe('E2E: Web Capture Microservice', () => {
     expect(text).toMatch(/<html/i);
     expect(text).toMatch(/Example Domain/i);
   }, 10000);
+
+  it('should return content from /fetch endpoint', async () => {
+    const url = 'https://example.com';
+    const res = await fetch(`${baseUrl}/fetch?url=${encodeURIComponent(url)}`);
+    expect(res.status).toBe(200);
+    const text = await res.text();
+    expect(text).toMatch(/<html/i);
+    expect(text).toMatch(/Example Domain/i);
+  }, 10000);
 }); 

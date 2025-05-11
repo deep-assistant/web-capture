@@ -126,4 +126,16 @@ describe('E2E (Docker): Web Capture Microservice', () => {
     const endTime = Date.now();
     console.log(`Timing: /stream endpoint: ${endTime - startTime}ms`);
   }, 10000);
+
+  it('should return content from /fetch endpoint', async () => {
+    const startTime = Date.now();
+    const url = 'https://example.com';
+    const res = await fetch(`${baseUrl}/fetch?url=${encodeURIComponent(url)}`);
+    expect(res.status).toBe(200);
+    const text = await res.text();
+    expect(text).toMatch(/<html/i);
+    expect(text).toMatch(/Example Domain/i);
+    const endTime = Date.now();
+    console.log(`Timing: /fetch endpoint: ${endTime - startTime}ms`);
+  }, 10000);
 }); 
