@@ -118,6 +118,8 @@ describe('Web Capture Microservice', () => {
 
       expect(response.status).toBe(200);
       expect(response.type).toBe('image/png');
+      const pngSignature = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+      expect(response.body.slice(0, 8)).toEqual(pngSignature);
       expect(response.body.equals(mockBuffer)).toBe(true);
       expect(captureWebsite.buffer).toHaveBeenCalledWith(testUrl, {
         fullPage: true,

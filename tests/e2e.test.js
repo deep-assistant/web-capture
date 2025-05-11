@@ -61,6 +61,9 @@ describe('E2E: Web Capture Microservice', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toMatch(/^image\/png/);
     const buf = Buffer.from(await res.arrayBuffer());
+    // PNG signature check
+    const pngSignature = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+    expect(buf.slice(0, 8)).toEqual(pngSignature);
     expect(buf.length).toBeGreaterThan(100); // Should be a non-trivial PNG
   });
 }); 
