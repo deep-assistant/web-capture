@@ -174,4 +174,423 @@ describe('convertHtmlToMarkdown', () => {
     expect(md).toMatch(/\|\s*Cell 1\s*\|\s*Cell 2\s*\|/);
     expect(md).toMatch(/\|\s*Cell 3\s*\|\s*Cell 4\s*\|/);
   });
+
+  it('handles empty tables gracefully', () => {
+    const html = `
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    const md = convertHtmlToMarkdown(html);
+    // Should not throw an error
+    // Accept the actual output for an empty table (2 columns, empty header and row)
+    expect(md.trim()).toBe('|  |  |\n| --- | --- |\n|  |  |');
+  });
+
+  it('handles specific ARIA table example', () => {
+    const html = `
+<div
+  class="mx-auto w-full decoration-primary/6 max-w-3xl page-api-block:ml-0 table_tableWrapper__zr7LC"
+>
+  <div role="table" class="flex flex-col">
+    <div
+      role="rowgroup"
+      class="w-full table_rowGroup__IKtSP straight-corners:rounded-none"
+    >
+      <div role="row" class="flex w-full">
+        <div
+          role="columnheader"
+          class="table_columnHeader__PGmsy text-left"
+          title="Attribute"
+          style="width: 181px; min-width: 181px"
+        >
+          Attribute
+        </div>
+        <div
+          role="columnheader"
+          class="table_columnHeader__PGmsy text-left"
+          title="Type"
+          style="width: 110px; min-width: 110px"
+        >
+          Type
+        </div>
+        <div
+          role="columnheader"
+          class="table_columnHeader__PGmsy text-left"
+          title="Required"
+          style="width: 104px; min-width: 104px"
+        >
+          Required
+        </div>
+        <div
+          role="columnheader"
+          class="table_columnHeader__PGmsy text-left"
+          title="Description"
+          style="width: clamp(100px, 100% - 395px, 100%); min-width: 100px"
+        >
+          Description
+        </div>
+      </div>
+    </div>
+    <div role="rowgroup" class="flex flex-col w-full [&amp;>*+*]:border-t">
+      <div class="table_row__LpfCG" role="row">
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="width: 181px; min-width: 181px"
+        >
+          <div
+            class="blocks w-full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w-full max-w-[unset]">
+              amount
+            </p>
+          </div>
+        </div>
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="width: 110px; min-width: 110px"
+        >
+          <div
+            class="blocks w-full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w-full max-w-[unset]">
+              decimal
+            </p>
+          </div>
+        </div>
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="width: 104px; min-width: 104px"
+        >
+          <div
+            class="blocks w-full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">yes</p>
+          </div>
+        </div>
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="
+            width: clamp(100px, 100% - 395px, 100%);
+            min-width: clamp(100px, 100% - 395px, 100%);
+          "
+        >
+          <div
+            class="blocks w-full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">
+              order amount
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="table_row__LpfCG" role="row">
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="width: 181px; min-width: 181px"
+        >
+          <div
+            class="blocks w-full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">
+              currency_id
+            </p>
+          </div>
+        </div>
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="width: 110px; min-width: 110px"
+        >
+          <div
+            class="blocks w-full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">
+              string
+            </p>
+          </div>
+        </div>
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="width: 104px; min-width: 104px"
+        >
+          <div
+            class="blocks w_full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">yes</p>
+          </div>
+        </div>
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="
+            width: clamp(100px, 100% - 395px, 100%);
+            min-width: clamp(100px, 100% - 395px, 100%);
+          "
+        >
+          <div
+            class="blocks w-full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">
+              order currency id
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="table_row__LpfCG" role="row">
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="width: 181px; min-width: 181px"
+        >
+          <div
+            class="blocks w-full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">
+              network
+            </p>
+          </div>
+        </div>
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="width: 110px; min-width: 110px"
+        >
+          <div
+            class="blocks w-full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">
+              string
+            </p>
+          </div>
+        </div>
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="width: 104px; min-width: 104px"
+        >
+          <div
+            class="blocks w_full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">yes</p>
+          </div>
+        </div>
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="
+            width: clamp(100px, 100% - 395px, 100%);
+            min-width: clamp(100px, 100% - 395px, 100%);
+          "
+        >
+          <div
+            class="blocks w-full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">
+              currency network
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="table_row__LpfCG" role="row">
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="width: 181px; min-width: 181px"
+        >
+          <div
+            class="blocks w_full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">
+              external_order_id
+            </p>
+          </div>
+        </div>
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="width: 110px; min-width: 110px"
+        >
+          <div
+            class="blocks w_full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">
+              string
+            </p>
+          </div>
+        </div>
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="width: 104px; min-width: 104px"
+        >
+          <div
+            class="blocks w_full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">no</p>
+          </div>
+        </div>
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="
+            width: clamp(100px, 100% - 395px, 100%);
+            min-width: clamp(100px, 100% - 395px, 100%);
+          "
+        >
+          <div
+            class="blocks w_full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">
+              additional external invoice id
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="table_row__LpfCG" role="row">
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="width: 181px; min-width: 181px"
+        >
+          <div
+            class="blocks w_full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">
+              email
+            </p>
+          </div>
+        </div>
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="width: 110px; min-width: 110px"
+        >
+          <div
+            class="blocks w_full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">
+              string
+            </p>
+          </div>
+        </div>
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="width: 104px; min-width: 104px"
+        >
+          <div
+            class="blocks w_full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">no</p>
+          </div>
+        </div>
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="
+            width: clamp(100px, 100% - 395px, 100%);
+            min-width: clamp(100px, 100% - 395px, 100%);
+          "
+        >
+          <div
+            class="blocks w_full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">
+              end users email
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="table_row__LpfCG" role="row">
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="width: 181px; min-width: 181px"
+        >
+          <div
+            class="blocks w_full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">
+              description
+            </p>
+          </div>
+        </div>
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="width: 110px; min-width: 110px"
+        >
+          <div
+            class="blocks w_full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">
+              string
+            </p>
+          </div>
+        </div>
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="width: 104px; min-width: 104px"
+        >
+          <div
+            class="blocks w_full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">no</p>
+          </div>
+        </div>
+        <div
+          role="cell"
+          class="table_cell__X_gFM"
+          style="
+            width: clamp(100px, 100% - 395px, 100%);
+            min-width: clamp(100px, 100% - 395px, 100%);
+          "
+        >
+          <div
+            class="blocks w_full space-y-2 lg:space-y-3 leading-normal self-center [&amp;_*]:text-left text-left"
+          >
+            <p class="mx-auto decoration-primary/6 w_full max-w-[unset]">
+              order description
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+    const md = convertHtmlToMarkdown(html);
+    // Should contain a Markdown table header
+    expect(md).toMatch(/\|\s*Attribute\s*\|\s*Type\s*\|\s*Required\s*\|\s*Description\s*\|/);
+    // Should contain the separator row
+    expect(md).toMatch(/\|\s*-+\s*\|\s*-+\s*\|\s*-+\s*\|\s*-+\s*\|/);
+    // Should contain all data rows
+    // Accept any number of backslashes before underscores (Turndown may escape as \\_)
+    expect(md).toMatch(/\|\s*amount\s*\|\s*decimal\s*\|\s*yes\s*\|\s*order amount\s*\|/);
+    expect(md).toMatch(/\|\s*currency(?:\\*)_id\s*\|\s*string\s*\|\s*yes\s*\|\s*order currency id\s*\|/);
+    expect(md).toMatch(/\|\s*network\s*\|\s*string\s*\|\s*yes\s*\|\s*currency network\s*\|/);
+    expect(md).toMatch(/\|\s*external(?:\\*)_order(?:\\*)_id\s*\|\s*string\s*\|\s*no\s*\|\s*additional external invoice id\s*\|/);
+    expect(md).toMatch(/\|\s*email\s*\|\s*string\s*\|\s*no\s*\|\s*end users email\s*\|/);
+    expect(md).toMatch(/\|\s*description\s*\|\s*string\s*\|\s*no\s*\|\s*order description\s*\|/);
+  });
 });
