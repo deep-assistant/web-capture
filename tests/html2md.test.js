@@ -34,4 +34,42 @@ describe('convertHtmlToMarkdown', () => {
     expect(md).toMatch(/\[Bar\]\(\/bar\)/);
     expect(md).toMatch(/## Title/);
   });
+
+  it('removes empty links with only whitespace', () => {
+    const html = `
+      <a href="/foo">   </a>
+      <a href="/bar">\n\t</a>
+      <a href="#anchor"> </a>
+    `;
+    const md = convertHtmlToMarkdown(html);
+    expect(md).not.toMatch(/\[\s*\]\([^)]*\)/);
+    expect(md).not.toMatch(/\[\s*\]\(#.*\)/);
+  });
+
+  it('removes empty links with only child elements', () => {
+    const html = `
+      <a href="/foo"><span></span></a>
+      <a href="/bar"><div></div></a>
+      <a href="#anchor"><span> </span></a>
+      <a href="/baz"><img src='x.png'></a>
+      <a href="/qux"><span>\n</span></a>
+      <a href="/keep">Text<span>child</span></a>
+    `;
+    const md = convertHtmlToMarkdown(html);
+    expect(md).not.toMatch(/\[\s*\]\([^)]*\)/);
+    expect(md).not.toMatch(/\[\s*\]\(#.*\)/);
+    expect(md).toMatch(/\[Textchild\]\(\/keep\)/);
+  });
+
+  it('removes headings with only whitespace', () => {
+    const html = `
+      <h2>   </h2>
+      <h3>\n\t</h3>
+      <h4>\u00A0</h4>
+      <h2>Valid Heading</h2>
+    `;
+    const md = convertHtmlToMarkdown(html);
+    expect(md).not.toMatch(/#+\s*$/m);
+    expect(md).toMatch(/## Valid Heading/);
+  });
 });

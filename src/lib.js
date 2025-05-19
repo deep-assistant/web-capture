@@ -1,5 +1,6 @@
 // Common logic for the web-capture microservice
 import fetch from 'node-fetch';
+import * as cheerio from 'cheerio';
 import TurndownService from 'turndown';
 import iconv from 'iconv-lite';
 import { URL } from 'url';
@@ -11,30 +12,78 @@ export async function fetchHtml(url) {
 }
 
 export function convertHtmlToMarkdown(html) {
-  // Remove <style>...</style> blocks
-  let cleanHtml = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
-  // Remove <script>...</script> blocks
-  cleanHtml = cleanHtml.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-  // Remove inline event handlers (e.g. onclick, onload)
-  cleanHtml = cleanHtml.replace(/ on\w+="[^"]*"/gi, '');
-  cleanHtml = cleanHtml.replace(/ on\w+='[^']*'/gi, '');
-  // Remove javascript: links
-  cleanHtml = cleanHtml.replace(/href=["']javascript:[^"']*["']/gi, '');
-  // Remove any leftover JS code blocks (e.g. $RS, $RC, etc.)
-  cleanHtml = cleanHtml.replace(/\$[A-Z]{2}\([^)]*\);?/g, '');
-  // Remove inline <style> attributes
-  cleanHtml = cleanHtml.replace(/ style="[^"]*"/gi, '');
-  cleanHtml = cleanHtml.replace(/ style='[^']*'/gi, '');
-  // Remove any leftover <script .../> tags
-  cleanHtml = cleanHtml.replace(/<script[^>]*\/>/gi, '');
-  // Remove any leftover <noscript>...</noscript> blocks
-  cleanHtml = cleanHtml.replace(/<noscript[^>]*>[\s\S]*?<\/noscript>/gi, '');
-  // Remove empty <a> tags (with or without href)
-  cleanHtml = cleanHtml.replace(/<a\s+[^>]*href=["'][^"']*["'][^>]*>\s*<\/a>/gi, '');
-  cleanHtml = cleanHtml.replace(/<a>\s*<\/a>/gi, '');
-  // Remove empty heading tags (h1-h6)
-  cleanHtml = cleanHtml.replace(/<h[1-6][^>]*>\s*<\/h[1-6]>/gi, '');
+  // Load HTML into Cheerio
+  const $ = cheerio.load(html);
 
+  // Remove <style>, <script>, and <noscript> tags
+  $('style, script, noscript').remove();
+
+  // Remove inline event handlers (attributes starting with 'on')
+  $('*').each(function() {
+    const attribs = this.attribs || {};
+    Object.keys(attribs).forEach(attr => {
+      if (attr.toLowerCase().startsWith('on')) {
+        $(this).removeAttr(attr);
+      }
+    });
+  });
+  // Remove javascript: links
+  $('a[href^="javascript:"]').remove();
+
+  // Remove inline style attributes
+  $('[style]').removeAttr('style');
+
+  // Remove empty headings (h1-h6) and headings with only whitespace
+  $('h1, h2, h3, h4, h5, h6').each(function() {
+    if (!$(this).text().trim()) {
+      $(this).remove();
+    }
+  });
+
+  // Remove <a> tags with no direct text content (including only whitespace or only child elements)
+  $('a').each(function() {
+    // Get all text nodes directly under this <a>
+    const directText = $(this).contents().filter(function() {
+      return this.type === 'text';
+    }).text();
+    // If no direct text and all children are empty or whitespace, remove the <a>
+    if (!directText.trim()) {
+      // Also check if all children are empty or whitespace
+      let allChildrenEmpty = true;
+      $(this).children().each(function() {
+        if ($(this).text().trim() || (this.tagName === 'img' && $(this).attr('alt'))) {
+          allChildrenEmpty = false;
+        }
+      });
+      if (allChildrenEmpty) {
+        $(this).remove();
+      }
+    }
+  });
+
+  // Remove <a> tags with only <img> as child and no alt text
+  $('a').each(function() {
+    const children = $(this).children();
+    if (children.length === 1 && children[0].tagName === 'img' && !$(children[0]).attr('alt')) {
+      $(this).remove();
+    }
+  });
+
+  // Remove any leftover empty <a> tags
+  $('a').each(function() {
+    if (!$(this).text().trim()) {
+      $(this).remove();
+    }
+  });
+
+  // Remove any leftover empty elements (optional, for robustness)
+  $('[data-remove-empty]').each(function() {
+    if (!$(this).text().trim()) {
+      $(this).remove();
+    }
+  });
+
+  // Convert cleaned HTML to Markdown
   const turndown = new TurndownService({
     headingStyle: 'atx',
     codeBlockStyle: 'fenced',
@@ -46,7 +95,7 @@ export function convertHtmlToMarkdown(html) {
     hr: '---',
     style: false
   });
-  return turndown.turndown(cleanHtml);
+  return turndown.turndown($.html());
 }
 
 // Convert relative URLs to absolute URLs in HTML content
@@ -98,8 +147,9 @@ export function convertRelativeUrls(html, baseUrl) {
     return `url("${absoluteUrl}")`;
   });
 
-  // Inject runtime JS hook to rewrite URLs at runtime
-  const runtimeHook = `
+  // Only inject runtime JS hook if there is a <script> tag in the original HTML
+  if (/<script[\s>]/i.test(html)) {
+    const runtimeHook = `
 <script>(function() {
   const baseUrl = '${base.href}';
   function absolutifyUrl(url) {
@@ -138,7 +188,8 @@ export function convertRelativeUrls(html, baseUrl) {
   observer.observe(document.body, { childList: true, subtree: true });
 })();</script>
 `;
-  result = result.replace(/<\/head>/i, runtimeHook + '</head>');
+    result = result.replace(/<\/head>/i, runtimeHook + '</head>');
+  }
 
   return result;
 }

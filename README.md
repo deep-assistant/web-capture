@@ -79,8 +79,8 @@ Returns a PNG screenshot of the specified URL.
 
 The service is built with:
 - Express.js for the web server
+- Puppeteer for headless browser automation and screenshots
 - Turndown for HTML to Markdown conversion
-- capture-website for taking screenshots
 - Jest for testing
 
 ## License
