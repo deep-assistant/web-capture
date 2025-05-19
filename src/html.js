@@ -29,13 +29,16 @@ export async function htmlHandler(req, res) {
           'Accept-Charset': 'utf-8'
         });
 
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        await page.setViewport({ width: 1280, height: 800 });
         // Navigate to the page
         await page.goto(absoluteUrl, { 
           waitUntil: 'networkidle0',
           timeout: 30000
         });
-
-        // Get the rendered HTML, convert to UTF-8, and make URLs absolute
+        // Wait for 5 seconds after page load
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        // Get the rendered HTML, convert to UTF-8, and make URLs absolute (and inject runtime JS hook)
         const renderedHtml = await page.content();
         const utf8Html = convertToUtf8(renderedHtml);
         const absoluteHtml = convertRelativeUrls(utf8Html, absoluteUrl);

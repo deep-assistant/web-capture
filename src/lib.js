@@ -76,6 +76,48 @@ export function convertRelativeUrls(html, baseUrl) {
     return `url("${absoluteUrl}")`;
   });
 
+  // Inject runtime JS hook to rewrite URLs at runtime
+  const runtimeHook = `
+<script>(function() {
+  const baseUrl = '${base.href}';
+  function absolutifyUrl(url) {
+    if (!url) return url;
+    if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) return url;
+    try { return new URL(url, baseUrl).href; } catch { return url; }
+  }
+  function fixElementUrls(el) {
+    if (el.tagName === 'A' || el.tagName === 'LINK') {
+      el.href = absolutifyUrl(el.getAttribute('href'));
+    }
+    if (el.tagName === 'IMG' || el.tagName === 'SCRIPT' || el.tagName === 'IFRAME' || el.tagName === 'SOURCE') {
+      el.src = absolutifyUrl(el.getAttribute('src'));
+    }
+    if (el.hasAttribute('style')) {
+      el.setAttribute('style', el.getAttribute('style').replace(/url\(['"]?([^'")]+)['"]?\)/g, function(m, url) { return 'url(\'' + absolutifyUrl(url) + '\')'; }));
+    }
+  }
+  function fixAllUrls(root) {
+    root.querySelectorAll('*').forEach(fixElementUrls);
+    root.querySelectorAll('style').forEach(function(styleTag) {
+      styleTag.textContent = styleTag.textContent.replace(/url\(['"]?([^'")]+)['"]?\)/g, function(m, url) { return 'url(\'' + absolutifyUrl(url) + '\')'; });
+    });
+  }
+  fixAllUrls(document);
+  const observer = new MutationObserver(function(mutations) {
+    for (const mutation of mutations) {
+      mutation.addedNodes.forEach(function(node) {
+        if (node.nodeType === 1) {
+          fixElementUrls(node);
+          fixAllUrls(node);
+        }
+      });
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+})();</script>
+`;
+  result = result.replace(/<\/head>/i, runtimeHook + '</head>');
+
   return result;
 }
 

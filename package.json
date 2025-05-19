@@ -18,9 +18,9 @@
     "examples": "yarn build && yarn examples:javascript && yarn examples:python"
   },
   "dependencies": {
-    "capture-website": "^4.0.0",
     "express": "^4.18.2",
     "node-fetch": "^2.7.0",
+    "puppeteer": "^24.8.2",
     "turndown": "^7.1.1"
   },
   "devDependencies": {
