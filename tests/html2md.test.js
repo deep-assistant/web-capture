@@ -72,4 +72,26 @@ describe('convertHtmlToMarkdown', () => {
     expect(md).not.toMatch(/#+\s*$/m);
     expect(md).toMatch(/## Valid Heading/);
   });
+
+  it('converts relative links to absolute if baseUrl is provided', () => {
+    const html = `
+      <a href="/foo">Foo</a>
+      <img src="/bar.png" alt="Bar">
+      <a href="https://external.com">External</a>
+    `;
+    const md = convertHtmlToMarkdown(html, 'https://example.com/base/');
+    expect(md).toMatch(/\[Foo\]\(https:\/\/example.com\/foo\)/);
+    expect(md).toMatch(/!\[Bar\]\(https:\/\/example.com\/bar.png\)/);
+    expect(md).toMatch(/\[External\]\(https:\/\/external.com\/?\)/);
+  });
+
+  it('does not change links if no baseUrl is provided', () => {
+    const html = `
+      <a href="/foo">Foo</a>
+      <img src="/bar.png" alt="Bar">
+    `;
+    const md = convertHtmlToMarkdown(html);
+    expect(md).toMatch(/\[Foo\]\(\/foo\)/);
+    expect(md).toMatch(/!\[Bar\]\(\/bar.png\)/);
+  });
 });

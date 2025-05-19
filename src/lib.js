@@ -11,7 +11,11 @@ export async function fetchHtml(url) {
   return response.text();
 }
 
-export function convertHtmlToMarkdown(html) {
+export function convertHtmlToMarkdown(html, baseUrl) {
+  // Ensure all URLs are absolute before Markdown conversion
+  if (baseUrl) {
+    html = convertRelativeUrls(html, baseUrl);
+  }
   // Load HTML into Cheerio
   const $ = cheerio.load(html);
 
