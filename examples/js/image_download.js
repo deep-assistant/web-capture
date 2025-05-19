@@ -1,5 +1,4 @@
 import fs from 'fs';
-import fetch from 'node-fetch';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -27,4 +26,4 @@ fetch(endpoint)
   })
   .catch(err => {
     console.error('Error:', err);
-  }); 
+  });
