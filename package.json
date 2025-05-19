@@ -31,7 +31,8 @@
     "get-port": "^7.1.0",
     "jest": "^29.7.0",
     "nock": "^13.5.4",
-    "supertest": "^6.3.4"
+    "supertest": "^6.3.4",
+    "turndown-plugin-gfm": "^1.0.2"
   },
   "type": "module",
   "keywords": [

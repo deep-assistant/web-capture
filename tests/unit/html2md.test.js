@@ -94,4 +94,84 @@ describe('convertHtmlToMarkdown', () => {
     expect(md).toMatch(/\[Foo\]\(\/foo\)/);
     expect(md).toMatch(/!\[Bar\]\(\/bar.png\)/);
   });
+
+  it('converts ARIA role table to Markdown table', () => {
+    const html = `
+      <div
+        role="table"
+        aria-label="Semantic Elements"
+        aria-describedby="semantic_elements_table_desc"
+        aria-rowcount="81">
+        <div id="semantic_elements_table_desc">
+          Semantic Elements to use instead of ARIA's roles
+        </div>
+        <div role="rowgroup">
+          <div role="row">
+            <span role="columnheader" aria-sort="none">ARIA Role</span>
+            <span role="columnheader" aria-sort="none">Semantic Element</span>
+          </div>
+        </div>
+        <div role="rowgroup">
+          <div role="row" aria-rowindex="11">
+            <span role="cell">header</span>
+            <span role="cell">h1</span>
+          </div>
+          <div role="row" aria-rowindex="16">
+            <span role="cell">header</span>
+            <span role="cell">h6</span>
+          </div>
+          <div role="row" aria-rowindex="18">
+            <span role="cell">rowgroup</span>
+            <span role="cell">thead</span>
+          </div>
+          <div role="row" aria-rowindex="24">
+            <span role="cell">term</span>
+            <span role="cell">dt</span>
+          </div>
+        </div>
+      </div>
+    `;
+    const md = convertHtmlToMarkdown(html);
+    // Should contain a Markdown table header
+    expect(md).toMatch(/\|\s*ARIA Role\s*\|\s*Semantic Element\s*\|/);
+    // Should contain the separator row
+    expect(md).toMatch(/\|\s*-+\s*\|\s*-+\s*\|/);
+    // Should contain all data rows
+    expect(md).toMatch(/\|\s*header\s*\|\s*h1\s*\|/);
+    expect(md).toMatch(/\|\s*header\s*\|\s*h6\s*\|/);
+    expect(md).toMatch(/\|\s*rowgroup\s*\|\s*thead\s*\|/);
+    expect(md).toMatch(/\|\s*term\s*\|\s*dt\s*\|/);
+  });
+
+  it('converts a regular HTML table to Markdown table', () => {
+    const html = `
+      <table>
+        <caption>Sample Table</caption>
+        <thead>
+          <tr>
+            <th>Header 1</th>
+            <th>Header 2</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Cell 1</td>
+            <td>Cell 2</td>
+          </tr>
+          <tr>
+            <td>Cell 3</td>
+            <td>Cell 4</td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    const md = convertHtmlToMarkdown(html);
+    // Should contain a Markdown table header
+    expect(md).toMatch(/\|\s*Header 1\s*\|\s*Header 2\s*\|/);
+    // Should contain the separator row
+    expect(md).toMatch(/\|\s*-+\s*\|\s*-+\s*\|/);
+    // Should contain all data rows
+    expect(md).toMatch(/\|\s*Cell 1\s*\|\s*Cell 2\s*\|/);
+    expect(md).toMatch(/\|\s*Cell 3\s*\|\s*Cell 4\s*\|/);
+  });
 });

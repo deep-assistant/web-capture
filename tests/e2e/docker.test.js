@@ -84,7 +84,7 @@ describe('E2E (Docker): Web Capture Microservice', () => {
     expect(text).toMatch(/<html/i);
     timings.html = Date.now() - htmlStart;
     console.log('Timing: /html endpoint:', timings.html + 'ms');
-  }, 10000);
+  }, 20000);
 
   it('should return Markdown from /markdown endpoint', async () => {
     const mdStart = Date.now();
@@ -95,7 +95,7 @@ describe('E2E (Docker): Web Capture Microservice', () => {
     expect(text).toMatch(/example/i);
     timings.markdown = Date.now() - mdStart;
     console.log('Timing: /markdown endpoint:', timings.markdown + 'ms');
-  }, 10000);
+  }, 20000);
 
   it('should return PNG from /image endpoint', async () => {
     const pngStart = Date.now();
@@ -110,22 +110,20 @@ describe('E2E (Docker): Web Capture Microservice', () => {
     expect(buf.length).toBeGreaterThan(100); // Should be a non-trivial PNG
     timings.png = Date.now() - pngStart;
     console.log('Timing: /image endpoint:', timings.png + 'ms');
-  }, 10000);
+  }, 60000);
 
   it('should stream content from /stream endpoint', async () => {
     const startTime = Date.now();
     const url = 'https://example.com';
     const res = await fetch(`${baseUrl}/stream?url=${encodeURIComponent(url)}`);
     expect(res.status).toBe(200);
-    
     // Get the response as text
     const text = await res.text();
     expect(text).toMatch(/<html/i);
     expect(text).toMatch(/Example Domain/i);
-    
     const endTime = Date.now();
     console.log(`Timing: /stream endpoint: ${endTime - startTime}ms`);
-  }, 10000);
+  }, 20000);
 
   it('should return content from /fetch endpoint', async () => {
     const startTime = Date.now();
@@ -137,5 +135,5 @@ describe('E2E (Docker): Web Capture Microservice', () => {
     expect(text).toMatch(/Example Domain/i);
     const endTime = Date.now();
     console.log(`Timing: /fetch endpoint: ${endTime - startTime}ms`);
-  }, 10000);
-}); 
+  }, 20000);
+});

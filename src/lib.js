@@ -4,6 +4,7 @@ import * as cheerio from 'cheerio';
 import TurndownService from 'turndown';
 import iconv from 'iconv-lite';
 import { URL } from 'url';
+import turndownPluginGfm from 'turndown-plugin-gfm';
 
 export async function fetchHtml(url) {
   if (!url) throw new Error('Missing URL parameter');
@@ -37,7 +38,7 @@ export function convertHtmlToMarkdown(html, baseUrl) {
   // Remove inline style attributes
   $('[style]').removeAttr('style');
 
-  // Remove empty headings (h1-h6) and headings with only whitespace
+  // Remove empty headings (h1-h2) and headings with only whitespace
   $('h1, h2, h3, h4, h5, h6').each(function() {
     if (!$(this).text().trim()) {
       $(this).remove();
@@ -87,6 +88,46 @@ export function convertHtmlToMarkdown(html, baseUrl) {
     }
   });
 
+  // Preprocess ARIA role-based tables to semantic tables with <thead> and <tbody>
+  $('[role="table"]').each(function() {
+    const $table = $(this);
+    const $newTable = $('<table></table>');
+    // Add caption if present
+    const label = $table.attr('aria-label');
+    const descId = $table.attr('aria-describedby');
+    if (label) {
+      $newTable.append(`<caption>${label}</caption>`);
+    } else if (descId && $(`#${descId}`).length) {
+      $newTable.append(`<caption>${$(`#${descId}`).text()}</caption>`);
+    }
+    const rowgroups = $table.find('> [role="rowgroup"]');
+    if (rowgroups.length > 0) {
+      // First rowgroup is header
+      const $thead = $('<thead></thead>');
+      const $tbody = $('<tbody></tbody>');
+      rowgroups.each(function(i) {
+        $(this).find('> [role="row"]').each(function() {
+          const $row = $(this);
+          const $tr = $('<tr></tr>');
+          $row.children('[role="columnheader"]').each(function() {
+            $tr.append($('<th></th>').text($(this).text()));
+          });
+          $row.children('[role="cell"]').each(function() {
+            $tr.append($('<td></td>').text($(this).text()));
+          });
+          if (i === 0 && $tr.children('th').length) {
+            $thead.append($tr);
+          } else {
+            $tbody.append($tr);
+          }
+        });
+      });
+      if ($thead.children().length) $newTable.append($thead);
+      if ($tbody.children().length) $newTable.append($tbody);
+    }
+    $table.replaceWith($newTable);
+  });
+
   // Convert cleaned HTML to Markdown
   const turndown = new TurndownService({
     headingStyle: 'atx',
@@ -99,6 +140,7 @@ export function convertHtmlToMarkdown(html, baseUrl) {
     hr: '---',
     style: false
   });
+  turndown.use(turndownPluginGfm.gfm);
   return turndown.turndown($.html());
 }
 
