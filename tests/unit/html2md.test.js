@@ -1,4 +1,4 @@
-import { convertHtmlToMarkdown } from '../src/lib.js';
+import { convertHtmlToMarkdown } from '../../src/lib.js';
 
 describe('convertHtmlToMarkdown', () => {
   it('removes empty links and anchor headings', () => {

@@ -5,7 +5,7 @@ import { jest } from '@jest/globals';
 let app;
 
 beforeAll(async () => {
-  app = (await import('../src/index.js')).app;
+  app = (await import('../../src/index.js')).app;
 });
 
 describe('Web Capture Microservice', () => {

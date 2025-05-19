@@ -1,4 +1,4 @@
-import { convertRelativeUrls } from '../src/lib.js';
+import { convertRelativeUrls } from '../../src/lib.js';
 
 describe('convertRelativeUrls', () => {
   const baseUrl = 'https://example.com/';
