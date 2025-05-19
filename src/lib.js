@@ -11,6 +11,30 @@ export async function fetchHtml(url) {
 }
 
 export function convertHtmlToMarkdown(html) {
+  // Remove <style>...</style> blocks
+  let cleanHtml = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+  // Remove <script>...</script> blocks
+  cleanHtml = cleanHtml.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+  // Remove inline event handlers (e.g. onclick, onload)
+  cleanHtml = cleanHtml.replace(/ on\w+="[^"]*"/gi, '');
+  cleanHtml = cleanHtml.replace(/ on\w+='[^']*'/gi, '');
+  // Remove javascript: links
+  cleanHtml = cleanHtml.replace(/href=["']javascript:[^"']*["']/gi, '');
+  // Remove any leftover JS code blocks (e.g. $RS, $RC, etc.)
+  cleanHtml = cleanHtml.replace(/\$[A-Z]{2}\([^)]*\);?/g, '');
+  // Remove inline <style> attributes
+  cleanHtml = cleanHtml.replace(/ style="[^"]*"/gi, '');
+  cleanHtml = cleanHtml.replace(/ style='[^']*'/gi, '');
+  // Remove any leftover <script .../> tags
+  cleanHtml = cleanHtml.replace(/<script[^>]*\/>/gi, '');
+  // Remove any leftover <noscript>...</noscript> blocks
+  cleanHtml = cleanHtml.replace(/<noscript[^>]*>[\s\S]*?<\/noscript>/gi, '');
+  // Remove empty <a> tags (with or without href)
+  cleanHtml = cleanHtml.replace(/<a\s+[^>]*href=["'][^"']*["'][^>]*>\s*<\/a>/gi, '');
+  cleanHtml = cleanHtml.replace(/<a>\s*<\/a>/gi, '');
+  // Remove empty heading tags (h1-h6)
+  cleanHtml = cleanHtml.replace(/<h[1-6][^>]*>\s*<\/h[1-6]>/gi, '');
+
   const turndown = new TurndownService({
     headingStyle: 'atx',
     codeBlockStyle: 'fenced',
@@ -20,10 +44,8 @@ export function convertHtmlToMarkdown(html) {
     linkStyle: 'inlined',
     linkReferenceStyle: 'full',
     hr: '---',
-    style: false // Ignore style tags
+    style: false
   });
-  // Remove any inline CSS
-  const cleanHtml = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
   return turndown.turndown(cleanHtml);
 }
 
@@ -170,4 +192,4 @@ export function ensureUtf8(html) {
     );
   }
   return html;
-} 
+}
