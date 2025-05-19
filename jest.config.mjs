@@ -10,6 +10,10 @@ export default {
   },
   testEnvironment: 'node',
   verbose: true,
-  testMatch: ['**/tests/**/*.test.js'],
+  testMatch: [
+    '**/tests/unit/**/*.test.js',
+    '**/tests/mock/**/*.test.js',
+    '**/tests/e2e/**/*.test.js'
+  ],
   setupFiles: ['./tests/jest.setup.mjs']
 };
