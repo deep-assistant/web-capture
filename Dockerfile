@@ -2,7 +2,7 @@ FROM node:22-bullseye
 
 WORKDIR /app
 
-# Install dependencies for headless Chrome
+# Install dependencies for headless Chrome (used by both Puppeteer and Playwright)
 RUN apt-get update && apt-get install -y \
     chromium \
     fonts-liberation \
@@ -30,6 +30,10 @@ RUN apt-get update && apt-get install -y \
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PUPPETEER_ARGS="--no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage"
+
+# Set Playwright environment variables
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
 
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
