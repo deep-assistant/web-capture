@@ -13,6 +13,7 @@ export default {
   testMatch: [
     '**/tests/unit/**/*.test.js',
     '**/tests/mock/**/*.test.js',
+    '**/tests/integration/**/*.test.js',
     '**/tests/e2e/**/*.test.js'
   ],
   setupFiles: ['./tests/jest.setup.mjs']
