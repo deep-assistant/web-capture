@@ -59,9 +59,22 @@ docker run -p 3000:3000 web-capture
 
 ### HTML Endpoint
 ```bash
-GET /html?url=<URL>
+GET /html?url=<URL>&engine=<ENGINE>
 ```
 Returns the raw HTML content of the specified URL.
+
+**Parameters:**
+- `url` (required): The URL to fetch
+- `engine` (optional): Browser engine to use (`puppeteer` or `playwright`). Default: `puppeteer`
+
+**Examples:**
+```bash
+# Using default Puppeteer engine
+curl http://localhost:3000/html?url=https://example.com
+
+# Using Playwright engine
+curl http://localhost:3000/html?url=https://example.com&engine=playwright
+```
 
 ### Markdown Endpoint
 ```bash
@@ -71,15 +84,46 @@ Converts the HTML content of the specified URL to Markdown format.
 
 ### Image Endpoint
 ```bash
-GET /image?url=<URL>
+GET /image?url=<URL>&engine=<ENGINE>
 ```
 Returns a PNG screenshot of the specified URL.
+
+**Parameters:**
+- `url` (required): The URL to capture
+- `engine` (optional): Browser engine to use (`puppeteer` or `playwright`). Default: `puppeteer`
+
+**Examples:**
+```bash
+# Using default Puppeteer engine
+curl http://localhost:3000/image?url=https://example.com > screenshot.png
+
+# Using Playwright engine
+curl http://localhost:3000/image?url=https://example.com&engine=playwright > screenshot.png
+```
+
+## Browser Engine Support
+
+The service supports both **Puppeteer** and **Playwright** browser engines:
+
+- **Puppeteer**: Default engine, mature and well-tested
+- **Playwright**: Alternative engine with similar capabilities
+
+You can choose the engine using the `engine` query parameter or by setting the `BROWSER_ENGINE` environment variable.
+
+**Supported engine values:**
+- `puppeteer` or `pptr` - Use Puppeteer
+- `playwright` or `pw` - Use Playwright
+
+**Environment Variable:**
+```bash
+export BROWSER_ENGINE=playwright
+```
 
 ## Development
 
 The service is built with:
 - Express.js for the web server
-- Puppeteer for headless browser automation and screenshots
+- Puppeteer and Playwright for headless browser automation and screenshots
 - Turndown for HTML to Markdown conversion
 - Jest for testing
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Web Capture is a lightweight microservice designed to fetch web pages and render them in multiple formats: HTML, Markdown, and PNG screenshots. It uses Puppeteer for headless browser automation to handle JavaScript-heavy websites and provides clean, processed output suitable for AI/LLM consumption, documentation, and archival purposes.
+Web Capture is a lightweight microservice designed to fetch web pages and render them in multiple formats: HTML, Markdown, and PNG screenshots. It supports both Puppeteer and Playwright browser engines for headless browser automation to handle JavaScript-heavy websites and provides clean, processed output suitable for AI/LLM consumption, documentation, and archival purposes.
 
 **Version**: 1.0.0
 **License**: Unlicense (public domain)
@@ -75,6 +75,7 @@ graph TB
 web-capture/
 ├── src/
 │   ├── index.js           # Express server entry point
+│   ├── browser.js         # Browser abstraction layer (Puppeteer & Playwright)
 │   ├── html.js            # HTML endpoint handler
 │   ├── markdown.js        # Markdown endpoint handler
 │   ├── image.js           # Screenshot endpoint handler
@@ -85,7 +86,10 @@ web-capture/
 ├── tests/
 │   ├── unit/              # Unit tests
 │   │   ├── html2md.test.js
-│   │   └── convertRelativeUrls.test.js
+│   │   ├── convertRelativeUrls.test.js
+│   │   └── browser.test.js
+│   ├── integration/       # Integration tests
+│   │   └── browser-engines.test.js
 │   ├── e2e/               # End-to-end tests
 │   │   ├── process.test.js
 │   │   └── docker.test.js
@@ -97,11 +101,14 @@ web-capture/
 │   ├── js/                # JavaScript examples
 │   │   ├── html_download.js
 │   │   ├── markdown_download.js
-│   │   └── image_download.js
+│   │   ├── image_download.js
+│   │   ├── playwright_example.js
+│   │   └── engine_comparison.js
 │   └── python/            # Python examples
 │       ├── html_download.py
 │       ├── markdown_download.py
-│       └── image_download.py
+│       ├── image_download.py
+│       └── playwright_example.py
 │
 ├── docs/
 │   └── market-analysis-2025-05-13.md
@@ -302,6 +309,104 @@ const currentCharset = charsetMatch ? charsetMatch[1].toLowerCase() : 'utf-8';
 
 ---
 
+### 6. Browser Abstraction Layer (`src/browser.js`)
+
+**Purpose**: Unified interface supporting both Puppeteer and Playwright browser engines
+
+#### Key Features
+
+- **Engine Selection**: Choose between Puppeteer and Playwright via query parameter or environment variable
+- **Unified API**: Same interface for both engines, enabling easy switching
+- **Automatic Adaptation**: Translates engine-specific options (e.g., `networkidle0` to `networkidle` for Playwright)
+- **Backward Compatibility**: Defaults to Puppeteer for existing deployments
+
+#### Browser Factory
+
+**`createBrowser(engine, options)`**
+- Creates a browser instance using the specified engine
+- Returns a unified `BrowserAdapter` object
+- Supported engines: `'puppeteer'` or `'playwright'`
+
+**`getBrowserEngine(req)`**
+- Determines which browser engine to use
+- Priority: query parameter > environment variable > default (puppeteer)
+- Supported query params: `engine` or `browser`
+- Supported values: `puppeteer`, `pptr`, `playwright`, `pw` (case-insensitive)
+
+#### Browser Adapter Interface
+
+```javascript
+{
+  async newPage()      // Create a new page
+  async close()        // Close the browser
+  type                 // Engine type ('puppeteer' or 'playwright')
+  _browser             // Original browser object (internal)
+}
+```
+
+#### Page Adapter Interface
+
+```javascript
+{
+  async setExtraHTTPHeaders(headers)  // Set HTTP headers
+  async setUserAgent(userAgent)       // Set user agent
+  async setViewport(viewport)         // Set viewport size
+  async goto(url, options)            // Navigate to URL
+  async content()                     // Get page HTML
+  async screenshot(options)           // Take screenshot
+  async close()                       // Close the page
+  _page                               // Original page object (internal)
+  _type                               // Engine type
+}
+```
+
+#### Engine Differences Handled
+
+The abstraction layer automatically handles differences between engines:
+
+1. **Viewport Setting**:
+   - Puppeteer: `page.setViewport()`
+   - Playwright: `page.setViewportSize()`
+
+2. **Network Idle Strategy**:
+   - Puppeteer: `waitUntil: 'networkidle0'`
+   - Playwright: `waitUntil: 'networkidle'`
+
+3. **Browser Launch**:
+   - Puppeteer: `puppeteer.launch()`
+   - Playwright: `playwright.chromium.launch()`
+
+#### Usage Examples
+
+**Using Puppeteer (default)**:
+```javascript
+const browser = await createBrowser('puppeteer');
+const page = await browser.newPage();
+await page.goto('https://example.com');
+const html = await page.content();
+await browser.close();
+```
+
+**Using Playwright**:
+```javascript
+const browser = await createBrowser('playwright');
+const page = await browser.newPage();
+await page.goto('https://example.com');
+const html = await page.content();
+await browser.close();
+```
+
+**In Request Handlers**:
+```javascript
+export async function htmlHandler(req, res) {
+  const engine = getBrowserEngine(req);  // From query param or env
+  const browser = await createBrowser(engine);
+  // ... rest of implementation
+}
+```
+
+---
+
 ## API Documentation
 
 ### GET /html
@@ -310,19 +415,24 @@ const currentCharset = charsetMatch ? charsetMatch[1].toLowerCase() : 'utf-8';
 
 **Parameters**:
 - `url` (required): Target URL
+- `engine` (optional): Browser engine (`puppeteer` or `playwright`). Default: `puppeteer`
 
 **Response**:
 - `Content-Type: text/html; charset=utf-8`
 - Body: HTML content
 
-**Example**:
+**Examples**:
 ```bash
+# Using default Puppeteer engine
 curl "http://localhost:3000/html?url=https://example.com"
+
+# Using Playwright engine
+curl "http://localhost:3000/html?url=https://example.com&engine=playwright"
 ```
 
 **Behavior**:
 - Plain HTML sites: Direct fetch + UTF-8 conversion + URL absolutification
-- JavaScript sites: Puppeteer rendering + 5s wait + URL absolutification
+- JavaScript sites: Browser rendering (Puppeteer or Playwright) + 5s wait + URL absolutification
 
 ---
 
@@ -356,15 +466,20 @@ curl "http://localhost:3000/markdown?url=https://example.com" > page.md
 
 **Parameters**:
 - `url` (required): Target URL
+- `engine` (optional): Browser engine (`puppeteer` or `playwright`). Default: `puppeteer`
 
 **Response**:
 - `Content-Type: image/png`
 - `Content-Disposition: inline; filename="screenshot.png"`
 - Body: PNG image buffer
 
-**Example**:
+**Examples**:
 ```bash
+# Using default Puppeteer engine
 curl "http://localhost:3000/image?url=https://example.com" > screenshot.png
+
+# Using Playwright engine
+curl "http://localhost:3000/image?url=https://example.com&engine=playwright" > screenshot.png
 ```
 
 **Screenshot Specs**:
@@ -520,14 +635,22 @@ export default {
 
 ### Environment Variables
 
+**General**:
 - `PORT` - Server port (default: 3000)
+- `BROWSER_ENGINE` - Default browser engine (`puppeteer` or `playwright`)
+
+**Puppeteer**:
 - `PUPPETEER_EXECUTABLE_PATH` - Chromium path (Docker: `/usr/bin/chromium`)
 - `PUPPETEER_SKIP_CHROMIUM_DOWNLOAD` - Skip bundled Chromium (Docker: `true`)
 - `PUPPETEER_ARGS` - Additional Puppeteer launch args
 
-### Puppeteer Configuration
+**Playwright**:
+- `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` - Chromium path (Docker: `/usr/bin/chromium`)
+- `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` - Skip browser download (Docker: `1`)
 
-**Browser Launch Args**:
+### Browser Configuration
+
+**Browser Launch Args** (both engines):
 ```javascript
 args: [
   '--no-sandbox',              // Required for Docker
@@ -536,10 +659,10 @@ args: [
 ]
 ```
 
-**Page Options**:
+**Page Options** (both engines):
 - User Agent: Chrome 120 on Windows 10
 - Viewport: 1280x800
-- Wait strategy: `networkidle0` (no network activity for 500ms)
+- Wait strategy: `networkidle0` (Puppeteer) / `networkidle` (Playwright)
 - Timeout: 30 seconds
 - Additional wait: 5 seconds for dynamic content
 
@@ -554,7 +677,8 @@ args: [
   "cheerio": "^1.0.0",           // HTML parsing
   "express": "^4.18.2",          // Web server
   "node-fetch": "^2.7.0",        // HTTP client
-  "puppeteer": "^24.8.2",        // Headless browser
+  "playwright": "^1.49.0",       // Headless browser (Playwright)
+  "puppeteer": "^24.8.2",        // Headless browser (Puppeteer)
   "turndown": "^7.1.1"           // HTML to Markdown
 }
 ```
@@ -780,16 +904,19 @@ Deep.Assistant Team
 ## Glossary
 
 - **Puppeteer**: Node library for controlling headless Chrome/Chromium
+- **Playwright**: Cross-browser automation library supporting Chromium, Firefox, and WebKit
 - **Cheerio**: Fast, flexible HTML parser for Node.js
 - **Turndown**: HTML to Markdown converter
 - **iconv-lite**: Character encoding conversion library
 - **Headless Browser**: Browser without GUI, controlled programmatically
-- **networkidle0**: Page load state (no network activity for 500ms)
+- **networkidle0**: Page load state in Puppeteer (no network activity for 500ms)
+- **networkidle**: Page load state in Playwright (similar to networkidle0)
 - **UTF-8**: Universal character encoding standard
 - **GFM**: GitHub Flavored Markdown
 - **ARIA**: Accessible Rich Internet Applications (web accessibility standard)
 - **Viewport**: Visible area of a web page
 - **ES Modules**: JavaScript module system (import/export)
+- **Browser Abstraction Layer**: Unified interface supporting multiple browser engines
 
 ---
 

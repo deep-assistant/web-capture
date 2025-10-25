@@ -1,4 +1,4 @@
-import puppeteer from 'puppeteer';
+import { createBrowser, getBrowserEngine } from './browser.js';
 
 export async function imageHandler(req, res) {
   const url = req.query.url;
@@ -6,9 +6,8 @@ export async function imageHandler(req, res) {
   try {
     // Ensure URL is absolute
     const absoluteUrl = url.startsWith('http') ? url : `https://${url}`;
-    const browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-    });
+    const engine = getBrowserEngine(req);
+    const browser = await createBrowser(engine);
     try {
       const page = await browser.newPage();
       await page.setExtraHTTPHeaders({
