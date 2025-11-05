@@ -130,12 +130,25 @@ function createPuppeteerPageAdapter(page) {
  * @returns {PageAdapter}
  */
 function createPlaywrightPageAdapter(page) {
+  // Store user agent to apply before navigation
+  let userAgentToSet = null;
+
   return {
     async setExtraHTTPHeaders(headers) {
       await page.setExtraHTTPHeaders(headers);
     },
     async setUserAgent(userAgent) {
-      await page.setUserAgent(userAgent);
+      // Playwright doesn't have page.setUserAgent(),
+      // so we store it and use context.addInitScript or route
+      userAgentToSet = userAgent;
+      // Set user agent using route to intercept and modify
+      await page.route('**/*', (route) => {
+        const headers = route.request().headers();
+        if (userAgentToSet) {
+          headers['user-agent'] = userAgentToSet;
+        }
+        route.continue({ headers });
+      });
     },
     async setViewport(viewport) {
       // Playwright uses setViewportSize instead of setViewport
