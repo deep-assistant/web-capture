@@ -1,11 +1,38 @@
 import { createBrowser, getBrowserEngine } from './browser.js';
+import { convertGoogleDriveUrl } from './lib.js';
+import fetch from 'node-fetch';
 
 export async function imageHandler(req, res) {
   const url = req.query.url;
   if (!url) return res.status(400).send('Missing `url` parameter');
   try {
     // Ensure URL is absolute
-    const absoluteUrl = url.startsWith('http') ? url : `https://${url}`;
+    let absoluteUrl = url.startsWith('http') ? url : `https://${url}`;
+
+    // Check if this is a Google Drive URL
+    const originalUrl = absoluteUrl;
+    const convertedUrl = convertGoogleDriveUrl(absoluteUrl);
+    const isGoogleDriveUrl = originalUrl !== convertedUrl;
+
+    // If it's a Google Drive URL converted to direct download, fetch the image directly
+    if (isGoogleDriveUrl) {
+      const response = await fetch(convertedUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+      }
+
+      const contentType = response.headers.get('content-type');
+      const buffer = Buffer.from(await response.arrayBuffer());
+
+      // Set appropriate content type
+      res.set('Content-Type', contentType || 'image/jpeg');
+      res.set('Content-Disposition', 'inline; filename="image.jpg"');
+      res.end(buffer);
+      return;
+    }
+
+    // For non-Google Drive URLs, use browser to take screenshot
+    absoluteUrl = convertedUrl;
     const engine = getBrowserEngine(req);
     const browser = await createBrowser(engine);
     try {

@@ -6,6 +6,34 @@ import iconv from 'iconv-lite';
 import { URL } from 'url';
 import turndownPluginGfm from 'turndown-plugin-gfm';
 
+/**
+ * Detects if a URL is a Google Drive link and converts it to a direct download URL
+ * @param {string} url - The URL to check and potentially convert
+ * @returns {string} - The converted URL if it's a Google Drive link, otherwise the original URL
+ */
+export function convertGoogleDriveUrl(url) {
+  if (!url) return url;
+
+  // Match Google Drive file URLs in various formats:
+  // - https://drive.google.com/file/d/{FILE_ID}/view
+  // - https://drive.google.com/file/d/{FILE_ID}
+  // - https://drive.google.com/open?id={FILE_ID}
+  const drivePatterns = [
+    /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)(?:\/view)?/,
+    /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/
+  ];
+
+  for (const pattern of drivePatterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) {
+      // Convert to direct download URL
+      return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+    }
+  }
+
+  return url;
+}
+
 export async function fetchHtml(url) {
   if (!url) throw new Error('Missing URL parameter');
   const response = await fetch(url);
