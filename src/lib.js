@@ -290,3 +290,33 @@ export function ensureUtf8(html) {
   }
   return html;
 }
+
+// Normalize URL to get text content (e.g., convert xpaste.pro URLs to raw format)
+export function normalizeUrlForTextContent(url) {
+  try {
+    const urlObj = new URL(url);
+
+    // Handle xpaste.pro URLs - convert to /raw endpoint
+    if (urlObj.hostname === 'xpaste.pro' && urlObj.pathname.startsWith('/p/')) {
+      // If it doesn't already end with /raw, append it
+      if (!urlObj.pathname.endsWith('/raw')) {
+        return `${url}/raw`;
+      }
+    }
+
+    return url;
+  } catch (error) {
+    // If URL parsing fails, return original URL
+    return url;
+  }
+}
+
+// Check if a URL is a text paste service (like xpaste.pro)
+export function isTextPasteUrl(url) {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname === 'xpaste.pro' && urlObj.pathname.startsWith('/p/');
+  } catch {
+    return false;
+  }
+}

@@ -5,6 +5,7 @@ import { markdownHandler } from './markdown.js';
 import { imageHandler } from './image.js';
 import { streamHandler } from './stream.js';
 import { fetchHandler } from './fetch.js';
+import { txtHandler } from './txt.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -14,6 +15,7 @@ app.get('/markdown', markdownHandler);
 app.get('/image', imageHandler);
 app.get('/stream', streamHandler);
 app.get('/fetch', fetchHandler);
+app.get('/txt', txtHandler);
 
 // Start the server if this is the main module
 const isMainModule = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
