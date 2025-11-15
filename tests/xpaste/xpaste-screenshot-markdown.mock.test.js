@@ -28,7 +28,7 @@ describe('xpaste.pro screenshot-to-markdown content matching', () => {
     const testUrl = 'https://xpaste.pro/p/t4q0Lsp0';
 
     // Load the actual HTML page content that was saved
-    const htmlPath = path.join(__dirname, '../../examples/xpaste/t4q0Lsp0-page.html');
+    const htmlPath = path.join(__dirname, './data/t4q0Lsp0-page.html');
     let testHtml;
 
     beforeAll(() => {

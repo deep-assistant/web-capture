@@ -1,9 +1,9 @@
 import { readFileSync, writeFileSync } from 'fs';
-import { convertHtmlToMarkdown } from '../src/lib.js';
+import { convertHtmlToMarkdown } from '../../src/lib.js';
 
-const html = readFileSync('./examples/xpaste/t4q0Lsp0-page.html', 'utf-8');
+const html = readFileSync('./tests/xpaste/data/t4q0Lsp0-page.html', 'utf-8');
 const markdown = convertHtmlToMarkdown(html, 'https://xpaste.pro/p/t4q0Lsp0');
-writeFileSync('./examples/xpaste/t4q0Lsp0-page.md', markdown);
+writeFileSync('./tests/xpaste/data/t4q0Lsp0-page.md', markdown);
 
 console.log('✅ Markdown regenerated successfully');
 console.log('\nFirst 30 lines:');

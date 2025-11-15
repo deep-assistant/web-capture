@@ -5,7 +5,7 @@
  */
 
 import fetch from 'node-fetch';
-import { convertHtmlToMarkdown } from '../src/lib.js';
+import { convertHtmlToMarkdown } from '../../src/lib.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -20,7 +20,7 @@ async function testXpasteHtmlToMarkdown() {
   const html = await response.text();
 
   // Save the HTML for reference
-  const htmlPath = path.join(__dirname, '../examples/xpaste/t4q0Lsp0-page.html');
+  const htmlPath = path.join(__dirname, '../../tests/xpaste/data/t4q0Lsp0-page.html');
   fs.writeFileSync(htmlPath, html);
   console.log('Saved HTML to:', htmlPath);
 
@@ -29,7 +29,7 @@ async function testXpasteHtmlToMarkdown() {
   const markdown = convertHtmlToMarkdown(html, url);
 
   // Save the markdown
-  const mdPath = path.join(__dirname, '../examples/xpaste/t4q0Lsp0-page.md');
+  const mdPath = path.join(__dirname, '../../tests/xpaste/data/t4q0Lsp0-page.md');
   fs.writeFileSync(mdPath, markdown);
   console.log('Saved markdown to:', mdPath);
 

@@ -13,7 +13,7 @@ if (!imageResponse.ok) {
 }
 
 const imageBuffer = await imageResponse.buffer();
-const outputPath = 'examples/xpaste/t4q0Lsp0-screenshot.png';
+const outputPath = 'tests/xpaste/data/t4q0Lsp0-screenshot.png';
 fs.writeFileSync(outputPath, imageBuffer);
 console.log(`Full-page screenshot saved to ${outputPath}`);
 console.log(`Screenshot size: ${imageBuffer.length} bytes`);
