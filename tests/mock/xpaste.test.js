@@ -75,20 +75,37 @@ SELECT f.*, t.*, p.*, u.*, tt.mark_time AS topic_mark_time, ft.mark_time AS foru
 
   describe('GET /markdown with xpaste.pro URL (small content)', () => {
     const testUrl = 'https://xpaste.pro/p/t4q0Lsp0';
-    // Using a smaller sample from actual data (63 lines total in real file)
-    const testText = `# 1
+    // Mock HTML that resembles actual xpaste.pro page structure
+    const testHtml = `<!DOCTYPE html>
+<html>
+<head><title>xPaste</title></head>
+<body>
+  <h1>Xpaste</h1>
+  <div>
+    <strong>Формат:</strong> text<br>
+    <strong>Время создания:</strong> 07.07.2021, 12:48 UTC<br>
+    <strong>Будет удалена:</strong> 05.07.2031, 12:48 UTC
+  </div>
+  <pre># 1
 #
 # Time: 210707 15:39:36
 # User@Host: 1703313381[1703313381] @  [136.243.53.188]  Id: 1138102510
 # Schema: xxxxxx  Last_errno: 0  Killed: 0
 # Query_time: 2.182754  Lock_time: 0.000120  Rows_sent: 0  Rows_examined: 324036  Rows_affected: 0
 SET timestamp=1625661576;
-SELECT * FROM phpbb_posts WHERE topic_id = 123;`;
+SELECT * FROM phpbb_posts WHERE topic_id = 123;</pre>
+  <footer>
+    <a href="https://xpaste.pro/">xPaste</a>
+    <p>Упакуем пароль или код в cсылку для передачи</p>
+    <p>Сделано в <a href="https://southbridge.io/">Southbridge</a></p>
+  </footer>
+</body>
+</html>`;
 
-    it('should embed text content in markdown when content is less than 1500 lines', async () => {
+    it('should convert HTML to markdown with all page elements when content is less than 1500 lines', async () => {
       nock('https://xpaste.pro')
-        .get('/p/t4q0Lsp0/raw')
-        .reply(200, testText, { 'content-type': 'text/plain; charset=utf-8' });
+        .get('/p/t4q0Lsp0')
+        .reply(200, testHtml, { 'content-type': 'text/html; charset=utf-8' });
 
       const response = await request(app)
         .get('/markdown')
@@ -96,10 +113,21 @@ SELECT * FROM phpbb_posts WHERE topic_id = 123;`;
 
       expect(response.status).toBe(200);
       expect(response.type).toBe('text/markdown');
-      expect(response.text).toContain('# https://xpaste.pro/p/t4q0Lsp0');
-      expect(response.text).toContain('Content from: https://xpaste.pro/p/t4q0Lsp0');
-      expect(response.text).toContain('```');
-      expect(response.text).toContain(testText);
+
+      // Verify it includes page metadata (visible in screenshot)
+      expect(response.text).toContain('Xpaste');
+      expect(response.text).toContain('Формат:');
+      expect(response.text).toContain('text');
+      expect(response.text).toContain('07.07.2021');
+
+      // Verify it includes the SQL query content
+      expect(response.text).toContain('1703313381');
+      // Note: markdown escapes special characters like * and _
+      expect(response.text).toMatch(/SELECT.*FROM phpbb.*posts/);
+
+      // Verify it includes footer elements (visible in screenshot)
+      expect(response.text).toContain('Southbridge');
+      expect(response.text).toContain('Упакуем пароль или код');
     });
   });
 
@@ -107,12 +135,14 @@ SELECT * FROM phpbb_posts WHERE topic_id = 123;`;
     const testUrl = 'https://xpaste.pro/p/largefile';
 
     it('should create a zip archive when content is 1500 lines or more', async () => {
-      // Create content with exactly 1500 lines
-      const largeText = Array(1500).fill('Line of text').join('\n');
+      // Create HTML content that will result in exactly 1500 lines of markdown
+      const largeContent = Array(1480).fill('<p>Line of text</p>').join('\n');
+      const largeHtml = `<!DOCTYPE html>
+<html><head><title>Large File</title></head><body>${largeContent}</body></html>`;
 
       nock('https://xpaste.pro')
-        .get('/p/largefile/raw')
-        .reply(200, largeText, { 'content-type': 'text/plain; charset=utf-8' });
+        .get('/p/largefile')
+        .reply(200, largeHtml, { 'content-type': 'text/html; charset=utf-8' });
 
       const response = await request(app)
         .get('/markdown')
@@ -128,12 +158,14 @@ SELECT * FROM phpbb_posts WHERE topic_id = 123;`;
     });
 
     it('should create a zip archive for content with more than 1500 lines', async () => {
-      // Create content with 2000 lines
-      const largeText = Array(2000).fill('Line of text').join('\n');
+      // Create HTML content that will result in more than 1500 lines of markdown
+      const largeContent = Array(1600).fill('<p>Line of text</p>').join('\n');
+      const largeHtml = `<!DOCTYPE html>
+<html><head><title>Large File</title></head><body>${largeContent}</body></html>`;
 
       nock('https://xpaste.pro')
-        .get('/p/largefile/raw')
-        .reply(200, largeText, { 'content-type': 'text/plain; charset=utf-8' });
+        .get('/p/largefile')
+        .reply(200, largeHtml, { 'content-type': 'text/html; charset=utf-8' });
 
       const response = await request(app)
         .get('/markdown')

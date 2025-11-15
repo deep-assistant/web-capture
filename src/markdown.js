@@ -24,35 +24,25 @@ export async function markdownHandler(req, res) {
 }
 
 async function handleTextPasteMarkdown(req, res, url) {
-  const textUrl = normalizeUrlForTextContent(url);
-  const response = await fetch(textUrl);
+  // Fetch the HTML version of the page to get the full visual content
+  // (including UI elements, metadata, etc.) as it appears in screenshots
+  const html = await fetchHtml(url);
+  const markdown = convertHtmlToMarkdown(html, url);
 
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-  }
-
-  const text = await response.text();
-  const lines = text.split('\n');
+  // Count lines to determine if we should create a zip archive
+  const lines = markdown.split('\n');
   const lineCount = lines.length;
 
-  // Get filename from URL for the text file
+  // Get filename from URL for potential zip file
   const urlObj = new URL(url);
   const pasteId = urlObj.pathname.split('/').pop();
-  const filename = `xpaste-pro-${pasteId}.txt`;
+  const filename = `xpaste-pro-${pasteId}.md`;
 
-  // If content is less than 1500 lines, embed it in markdown
+  // If content is less than 1500 lines, return markdown directly
   if (lineCount < 1500) {
-    const markdown = `# ${url}
-
-Content from: ${url}
-
-\`\`\`
-${text}
-\`\`\`
-`;
     res.type('text/markdown').send(markdown);
   } else {
-    // Create a zip archive with index.md and the text file
+    // Create a zip archive with index.md and the full markdown file
     const archive = archiver('zip', {
       zlib: { level: 9 }
     });
@@ -64,7 +54,7 @@ ${text}
     // Pipe archive to response
     archive.pipe(res);
 
-    // Add index.md with link to the text file
+    // Add index.md with link to the full markdown file
     const indexMarkdown = `# ${url}
 
 Content from: ${url}
@@ -73,8 +63,8 @@ The full content is available in [${filename}](${filename}) (${lineCount} lines)
 `;
     archive.append(indexMarkdown, { name: 'index.md' });
 
-    // Add the text file
-    archive.append(text, { name: filename });
+    // Add the full markdown file
+    archive.append(markdown, { name: filename });
 
     // Finalize the archive
     await archive.finalize();
