@@ -20,6 +20,23 @@ export function convertHtmlToMarkdown(html, baseUrl) {
   // Load HTML into Cheerio
   const $ = cheerio.load(html);
 
+  // Reorder header/main/footer elements to match visual layout
+  // Some sites (like xpaste.pro) use CSS to position header at top,
+  // but in HTML it comes after main. We need to fix the order for markdown.
+  const $header = $('header').first();
+  const $main = $('main').first();
+  const $footer = $('footer').first();
+
+  if ($header.length && $main.length && $header.index() > $main.index()) {
+    // Header comes after main in DOM, but should come before in markdown
+    $main.before($header);
+  }
+
+  if ($footer.length && $main.length && $footer.index() < $main.index()) {
+    // Footer comes before main in DOM, but should come after in markdown
+    $main.after($footer);
+  }
+
   // Remove <style>, <script>, and <noscript> tags
   $('style, script, noscript').remove();
 

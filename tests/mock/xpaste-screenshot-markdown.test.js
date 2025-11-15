@@ -192,6 +192,47 @@ describe('xpaste.pro screenshot-to-markdown content matching', () => {
       expect(response.text).toContain('RAW');
     });
 
+    it('should verify correct element ordering - heading and languages at top', async () => {
+      if (!testHtml) {
+        console.warn('Skipping test - HTML file not found');
+        return;
+      }
+
+      nock('https://xpaste.pro')
+        .get('/p/t4q0Lsp0')
+        .reply(200, testHtml, { 'content-type': 'text/html; charset=utf-8' });
+
+      const response = await request(app)
+        .get('/markdown')
+        .query({ url: testUrl });
+
+      expect(response.status).toBe(200);
+
+      const lines = response.text.split('\n');
+
+      // Find line numbers of key elements
+      const headingLine = lines.findIndex(l => l.includes('Упакуем пароль'));
+      const languageLine = lines.findIndex(l => l.includes('[Ru]') || l.includes('[En]'));
+      const formatLine = lines.findIndex(l => l.includes('Формат:'));
+      const firstQueryLine = lines.findIndex(l => l.includes('# 1') && l.includes('#'));
+
+      // Verify heading comes before metadata (as shown in screenshot)
+      expect(headingLine).toBeGreaterThan(0);
+      expect(headingLine).toBeLessThan(formatLine);
+
+      // Verify languages come before metadata (as shown in screenshot)
+      expect(languageLine).toBeGreaterThan(0);
+      expect(languageLine).toBeLessThan(formatLine);
+
+      // Verify heading comes before main content
+      expect(headingLine).toBeLessThan(firstQueryLine);
+
+      // Verify metadata comes before main content
+      expect(formatLine).toBeLessThan(firstQueryLine);
+
+      console.log(`✓ Element ordering verified: heading (line ${headingLine + 1}) -> languages (line ${languageLine + 1}) -> metadata (line ${formatLine + 1}) -> content (line ${firstQueryLine + 1})`);
+    });
+
     it('should verify markdown extraction matches screenshot - comprehensive check', async () => {
       if (!testHtml) {
         console.warn('Skipping test - HTML file not found');
