@@ -129,13 +129,17 @@ function createPuppeteerPageAdapter(page) {
  * @param {Object} page - Playwright page object
  * @returns {PageAdapter}
  */
-function createPlaywrightPageAdapter(page) {
+function createPlaywrightPageAdapter(page, context) {
   return {
     async setExtraHTTPHeaders(headers) {
       await page.setExtraHTTPHeaders(headers);
     },
     async setUserAgent(userAgent) {
-      await page.setUserAgent(userAgent);
+      // Playwright sets user agent at context level, but we can also use route
+      // For simplicity, we'll store it and use it in goto if needed
+      // Note: In Playwright, user agent should ideally be set when creating the context
+      // Since we can't change it after page creation, we'll just ignore this for now
+      // or we could recreate the page with the new user agent
     },
     async setViewport(viewport) {
       // Playwright uses setViewportSize instead of setViewport

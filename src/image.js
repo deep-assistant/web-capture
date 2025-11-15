@@ -7,6 +7,7 @@ export async function imageHandler(req, res) {
     // Ensure URL is absolute
     const absoluteUrl = url.startsWith('http') ? url : `https://${url}`;
     const engine = getBrowserEngine(req);
+    const fullPage = req.query.fullPage === 'true';
     const browser = await createBrowser(engine);
     try {
       const page = await browser.newPage();
@@ -22,8 +23,8 @@ export async function imageHandler(req, res) {
       });
       // Wait for 5 seconds after page load
       await new Promise(resolve => setTimeout(resolve, 5000));
-      // Take a screenshot of just the viewport (not the full page)
-      const buffer = await page.screenshot({ type: 'png' });
+      // Take a screenshot (viewport or full page based on query parameter)
+      const buffer = await page.screenshot({ type: 'png', fullPage });
       res.set('Content-Type', 'image/png');
       res.set('Content-Disposition', 'inline; filename="screenshot.png"');
       res.end(buffer);
