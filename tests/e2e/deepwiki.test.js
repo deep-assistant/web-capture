@@ -4,7 +4,6 @@ import getPort from 'get-port';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import AdmZip from 'adm-zip';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WAIT_FOR_READY = 5000; // ms
@@ -102,13 +101,13 @@ describe('DeepWiki URL Markdown Conversion', () => {
     expect(markdown).toContain('-   '); // List items
     expect(markdown).toContain('1.  '); // Numbered lists
 
-    // Create output directory for test artifacts
-    const outputDir = path.join(__dirname, '..', '..', 'experiments');
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
+    // Create output directory for test fixtures (part of test case, not experiments)
+    const fixturesDir = path.join(__dirname, '..', 'fixtures', 'deepwiki');
+    if (!fs.existsSync(fixturesDir)) {
+      fs.mkdirSync(fixturesDir, { recursive: true });
     }
 
-    // If document is more than 1500 lines, we should split it
+    // If document is more than 1500 lines, split it into multiple files
     if (lineCount > 1500) {
       console.log('Document exceeds 1500 lines, splitting into multiple files...');
 
@@ -118,39 +117,17 @@ describe('DeepWiki URL Markdown Conversion', () => {
         chunks.push(lines.slice(i, i + 1500).join('\n'));
       }
 
-      // Save each chunk to a separate file
-      const files = [];
+      // Save each chunk to a separate file in fixtures directory
       chunks.forEach((chunk, index) => {
         const filename = index === 0 ? 'index.md' : `part-${index}.md`;
-        const filepath = path.join(outputDir, filename);
+        const filepath = path.join(fixturesDir, filename);
         fs.writeFileSync(filepath, chunk, 'utf-8');
-        files.push(filename);
         console.log(`Created ${filename} with ${chunk.split('\n').length} lines`);
+        expect(fs.existsSync(filepath)).toBe(true);
       });
-
-      // Create a zip archive if we have multiple files
-      if (chunks.length > 1) {
-        const zip = new AdmZip();
-
-        files.forEach(filename => {
-          const filepath = path.join(outputDir, filename);
-          zip.addLocalFile(filepath);
-        });
-
-        const zipPath = path.join(outputDir, 'deepwiki-markdown.zip');
-        zip.writeZip(zipPath);
-        console.log(`Created zip archive at ${zipPath}`);
-
-        // Clean up individual files
-        files.forEach(filename => {
-          fs.unlinkSync(path.join(outputDir, filename));
-        });
-
-        expect(fs.existsSync(zipPath)).toBe(true);
-      }
     } else {
       // Save as single markdown file
-      const filepath = path.join(outputDir, 'deepwiki-markdown.md');
+      const filepath = path.join(fixturesDir, 'index.md');
       fs.writeFileSync(filepath, markdown, 'utf-8');
       console.log(`Saved markdown to ${filepath} (${lineCount} lines)`);
       expect(fs.existsSync(filepath)).toBe(true);
