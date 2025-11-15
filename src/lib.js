@@ -20,6 +20,23 @@ export function convertHtmlToMarkdown(html, baseUrl) {
   // Load HTML into Cheerio
   const $ = cheerio.load(html);
 
+  // Reorder header/main/footer elements to match visual layout
+  // Some sites (like xpaste.pro) use CSS to position header at top,
+  // but in HTML it comes after main. We need to fix the order for markdown.
+  const $header = $('header').first();
+  const $main = $('main').first();
+  const $footer = $('footer').first();
+
+  if ($header.length && $main.length && $header.index() > $main.index()) {
+    // Header comes after main in DOM, but should come before in markdown
+    $main.before($header);
+  }
+
+  if ($footer.length && $main.length && $footer.index() < $main.index()) {
+    // Footer comes before main in DOM, but should come after in markdown
+    $main.after($footer);
+  }
+
   // Remove <style>, <script>, and <noscript> tags
   $('style, script, noscript').remove();
 
@@ -289,4 +306,34 @@ export function ensureUtf8(html) {
     );
   }
   return html;
+}
+
+// Normalize URL to get text content (e.g., convert xpaste.pro URLs to raw format)
+export function normalizeUrlForTextContent(url) {
+  try {
+    const urlObj = new URL(url);
+
+    // Handle xpaste.pro URLs - convert to /raw endpoint
+    if (urlObj.hostname === 'xpaste.pro' && urlObj.pathname.startsWith('/p/')) {
+      // If it doesn't already end with /raw, append it
+      if (!urlObj.pathname.endsWith('/raw')) {
+        return `${url}/raw`;
+      }
+    }
+
+    return url;
+  } catch (error) {
+    // If URL parsing fails, return original URL
+    return url;
+  }
+}
+
+// Check if a URL is a text paste service (like xpaste.pro)
+export function isTextPasteUrl(url) {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname === 'xpaste.pro' && urlObj.pathname.startsWith('/p/');
+  } catch {
+    return false;
+  }
 }
