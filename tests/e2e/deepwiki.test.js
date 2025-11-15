@@ -59,6 +59,49 @@ describe('DeepWiki URL Markdown Conversion', () => {
 
     console.log(`Markdown conversion resulted in ${lineCount} lines`);
 
+    // Validate key content elements from the DeepWiki page are present
+    // These checks ensure we captured the actual rendered content, not just the HTML shell
+
+    // 1. Check for page title/header
+    expect(markdown).toContain('Search | DeepWiki');
+
+    // 2. Check for the repository link
+    expect(markdown).toContain('deep-assistant/hive-mind');
+
+    // 3. Check for the Russian query text (verifies actual page content was captured)
+    expect(markdown).toContain('расскажи пожалуйста на английском');
+
+    // 4. Check for "Deep Thought Process" indicator
+    expect(markdown).toContain('Deep');
+    expect(markdown).toContain('Thought Process');
+
+    // 5. Check for the main document heading
+    expect(markdown).toContain('# Hive Mind: A Comprehensive Overview');
+
+    // 6. Check for major sections (validates document structure)
+    expect(markdown).toContain('## Executive Summary');
+    expect(markdown).toContain('## I. Foundational Philosophy: Human-AI Collaboration Model');
+    expect(markdown).toContain('## II. Architectural Layers: The Three-Tier Design');
+    expect(markdown).toContain('## III. Original Ideas and Innovations');
+
+    // 7. Check for code references (validates that code links were captured)
+    expect(markdown).toContain('README.md:');
+    expect(markdown).toContain('flow.md:');
+    expect(markdown).toContain('claude.prompts.lib.mjs:');
+
+    // 8. Check for specific innovations mentioned
+    expect(markdown).toContain('Innovation 1: The Task Clarification System');
+    expect(markdown).toContain('Innovation 2: Multi-Dimensional Feedback Detection');
+    expect(markdown).toContain('Innovation 3: Thinking Depth Control');
+
+    // 9. Verify content depth - should be substantial (>2000 lines for this URL)
+    expect(lineCount).toBeGreaterThan(2000);
+
+    // 10. Check for markdown formatting elements (lists, bold text)
+    expect(markdown).toContain('**');  // Bold text
+    expect(markdown).toContain('-   '); // List items
+    expect(markdown).toContain('1.  '); // Numbered lists
+
     // Create output directory for test artifacts
     const outputDir = path.join(__dirname, '..', '..', 'experiments');
     if (!fs.existsSync(outputDir)) {
